@@ -1,0 +1,31 @@
+import os
+import subprocess
+import time
+
+def get_regions():
+    command = "aws ec2 describe-regions --query 'Regions[].RegionName' --output text"
+    response = subprocess.run(command, shell=True, capture_output=True, text=True)
+    return response.stdout.split()
+
+def api_caller(*args):
+    cmd_filters_names = ["dns-name", "private-dns-name"]
+    cmd_filters = f"--filters 'Name={cmd_filters_names[args[1]]},Values={dnsName}'"
+    cmd_query = f"--query 'Reservations[].Instances[].[InstanceId]'"
+    cmd_region = f"--region {args[0]}"
+    cmd_root = f"aws ec2 describe-instances {cmd_region} {cmd_filters} {cmd_query} --output text"
+    cmd_response=subprocess.run(cmd_root, shell=True, capture_output=True, text=True)
+    return cmd_response.stdout
+
+def region_iter(regions,dnsName):
+    start_time = time.time()
+    for i in regions:
+        i=i.strip()
+        a=api_caller(i,0)+api_caller(i,1)
+        if a:
+            print(f"Found in Region: {i.strip()}\nInstanceId: {a.strip()}")
+            print(f"\n[Total elapsed time: {time.time() - start_time:.2f} seconds]")
+            break
+
+regions = get_regions()
+dnsName = input("Enter the DNS name to find: ")
+region_iter(regions,dnsName)
