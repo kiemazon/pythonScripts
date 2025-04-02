@@ -1,0 +1,26 @@
+import os
+import subprocess
+
+# find all available regions using os cli command
+a = "aws ec2 describe-regions --query 'Regions[].RegionName' --output text"
+aoutput = subprocess.run(a, shell=True, capture_output=True, text=True)
+if aoutput.returncode != 0:
+    print(f"Error fetching regions: {aoutput.stderr}")
+    exit(1)
+print(f"All available regions: {aoutput.stdout}")
+# set envvar to the output of the command
+
+# iterate through regions and run command='aws resource example_cmd {region}' for each region that is available
+regions = aoutput.stdout.split()
+for region in regions:
+    region = region.strip()
+    command = f"aws ec2 describe-instances --region {region}"
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    
+    # print the result of the command
+    if result.returncode == 0:
+        print(f"Instances in {region}:")
+        print(result.stdout)
+    else:
+        print(f"Error in {region}: {result.stderr}")
+        
